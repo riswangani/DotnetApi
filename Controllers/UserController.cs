@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SQLSeed.Models;
 
 namespace DotnetAPI.Controllers;
 
@@ -16,16 +17,43 @@ public class UserController : ControllerBase
     [HttpGet("TestConnection")]
     public DateTime TestConnection()
     {
-        string sql = "SELECT GETDATE()";
-        DateTime response = _dapper.LoadDataSinggle<DateTime>(sql);
-        return response;
+        return _dapper.LoadData<DateTime>("SELECT GETDATE()").FirstOrDefault();
     }
 
-    [HttpGet("GetUsers/{testValue}")]
+    [HttpGet("GetUsers")]
     // public IActionResult Test()
-    public string[] Test(string testValue)
+    public IEnumerable<User> GetUsers()
     {
-        string[] responseArray = new string[] { "Hello", "World", testValue };
-        return responseArray;
+        string sql =
+            @"
+            SELECT [UserId],
+                [FirstName],
+                [LastName],
+                [Email],
+                [Gender],
+                [Active]
+            FROM TutorialAppSchema.Users";
+        IEnumerable<User> users = _dapper.LoadData<User>(sql);
+        return users;
+        // return new string[] { "Test", "Test 2" };
+    }
+
+    [HttpGet("GetSingleUser/{userId}")]
+    // public IActionResult Test()
+    public User GetSingleUser(int userId)
+    {
+        string sql =
+            @"
+            SELECT [UserId],
+                [FirstName],
+                [LastName],
+                [Email],
+                [Gender],
+                [Active]
+            FROM TutorialAppSchema.Users
+                WHERE UserId = " + userId.ToString();
+        User user = _dapper.LoadDataSinggle<User>(sql);
+        return user;
+        // return new string[] { "Test", "Test 2", userId };
     }
 }
