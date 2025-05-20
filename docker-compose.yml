@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  azuresqledge:
+    image: mcr.microsoft.com/azure-sql-edge
+    container_name: azuresqledge
+    restart: always
+    ports:
+      - '1433:1433'
+    environment:
+      - ACCEPT_EULA=1
+      - MSSQL_SA_PASSWORD=yourStrong(!)Password
+    volumes:
+      - sqlvolume:/var/opt/mssql
+
+volumes:
+  sqlvolume:
+# docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPass123" -e "MSSQL_PID=Developer" -e "MSSQL_USER=SA" -p 1433:1433 -d --name=sql mcr.microsoft.com/azure-sql-edge
+# docker-compose up -d
+# docker-compose down -d
