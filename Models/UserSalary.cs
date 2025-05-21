@@ -1,4 +1,4 @@
-namespace SQLSeed.Models
+namespace DotnetAPI.Models
 {
     public partial class UserSalary
     {
