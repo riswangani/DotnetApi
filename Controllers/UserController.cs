@@ -83,7 +83,7 @@ public class UserController : ControllerBase
         {
             return Ok();
         }
-        throw new Exception("Error updating user");
+        throw new Exception("Failed updating user");
     }
 
     [HttpPost("AddUser")]
@@ -110,11 +110,26 @@ public class UserController : ControllerBase
             + "')";
 
         // Console.WriteLine(sql);
-
         if (_dapper.ExecuteSql(sql))
         {
             return Ok();
         }
-        throw new Exception("Error Adding user");
+        throw new Exception("Failed Adding user");
+    }
+
+    [HttpDelete("DeleteUser/{userId}")]
+    public IActionResult DeleteUser(int userId)
+    {
+        string sql =
+            @"
+            DELETE FROM TutorialAppSchema.Users
+            WHERE UserId = " + userId.ToString();
+
+        // Console.WriteLine(sql);
+        if (_dapper.ExecuteSql(sql))
+        {
+            return Ok();
+        }
+        throw new Exception("Failed deleting user");
     }
 }
