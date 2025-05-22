@@ -1,4 +1,5 @@
 using System.Data;
+using System.Reflection.Metadata.Ecma335;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -13,36 +14,38 @@ namespace DotnetAPI.Data
             _config = config;
         }
 
-        public IEnumerable<T> LoadData<T>(string sql)
+        // Versi pakai parameter (biar bisa query yang aman pakai @param)
+        public IEnumerable<T> LoadData<T>(string sql, object? parameters = null)
         {
             IDbConnection dbConnection = new SqlConnection(
                 _config.GetConnectionString("DefaultConnection")
             );
-            return dbConnection.Query<T>(sql);
+            return dbConnection.Query<T>(sql, parameters);
         }
 
-        public T LoadDataSinggle<T>(string sql)
+        // Versi pakai parameter (biar bisa query yang aman pakai @param)
+        public T LoadDataSinggle<T>(string sql, object? parameters = null)
         {
             IDbConnection dbConnection = new SqlConnection(
                 _config.GetConnectionString("DefaultConnection")
             );
-            return dbConnection.QuerySingle<T>(sql);
+            return dbConnection.QuerySingle<T>(sql, parameters);
         }
 
-        public bool ExecuteSql(string sql)
+        public bool ExecuteSql(string sql, object? parameters = null)
         {
             IDbConnection dbConnection = new SqlConnection(
                 _config.GetConnectionString("DefaultConnection")
             );
-            return dbConnection.Execute(sql) > 0;
+            return dbConnection.Execute(sql, parameters) > 0;
         }
 
-        public int ExecuteSqlWithRowCount(string sql)
+        public int ExecuteSqlWithRowCount(string sql, object? parameters = null)
         {
             IDbConnection dbConnection = new SqlConnection(
                 _config.GetConnectionString("DefaultConnection")
             );
-            return dbConnection.Execute(sql);
+            return dbConnection.Execute(sql, parameters);
         }
     }
 }

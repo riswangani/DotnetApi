@@ -29,14 +29,15 @@ public class UserController : ControllerBase
         string sql =
             @"
             SELECT [UserId],
-                [FirstName],
-                [LastName],
-                [Email],
-                [Gender],
-                [Active]
+                   [FirstName],
+                   [LastName],
+                   [Email],
+                   [Gender],
+                   [Active]
             FROM TutorialAppSchema.Users";
-        IEnumerable<User> users = _dapper.LoadData<User>(sql);
-        return users;
+
+        return _dapper.LoadData<User>(sql);
+
         // return new string[] { "Test", "Test 2" };
     }
 
@@ -54,9 +55,8 @@ public class UserController : ControllerBase
                 [Active]
             FROM TutorialAppSchema.Users
                 WHERE UserId = " + userId.ToString();
-        User user = _dapper.LoadDataSinggle<User>(sql);
+        User user = _dapper.LoadDataSinggle<User>(sql, new { UserId = userId });
         return user;
-        // return new string[] { "Test", "Test 2", userId };
     }
 
     [HttpPut("EditUser")]
@@ -64,53 +64,40 @@ public class UserController : ControllerBase
     {
         string sql =
             @"
-            UPDATE  TutorialAppSchema.Users
-            SET [FirstName] = '"
-            + user.FirstName
-            + "', [LastName] = '"
-            + user.LastName
-            + "', [Email] = '"
-            + user.Email
-            + "', [Gender] = '"
-            + user.Gender
-            + "', [Active] = '"
-            + user.Active
-            + "' WHERE UserId = "
-            + user.UserId;
+            UPDATE TutorialAppSchema.Users
+            SET [FirstName] = @FirstName,
+                [LastName] = @LastName,
+                [Email] = @Email,
+                [Gender] = @Gender,
+                [Active] = @Active
+            WHERE UserId = @UserId";
 
         // Console.WriteLine(sql);
-        if (_dapper.ExecuteSql(sql))
-        {
-            return Ok();
-        }
-        throw new Exception("Failed updating user");
+        bool result = _dapper.ExecuteSql(sql, user);
+        return result ? Ok() : throw new Exception("Failed updating user");
     }
 
     [HttpPost("AddUser")]
     public IActionResult AddUser(UserToAddDto user)
     {
         string sql =
-            @"INSERT INTO TutorialAppSchema.Users(
+            @"
+            INSERT INTO TutorialAppSchema.Users(
                 [FirstName],
                 [LastName],
                 [Email],
                 [Gender],
                 [Active]
-            ) VALUES ("
-            + "'"
-            + user.FirstName
-            + "', '"
-            + user.LastName
-            + "', '"
-            + user.Email
-            + "', '"
-            + user.Gender
-            + "', '"
-            + user.Active
-            + "')";
+            ) VALUES (
+                @FirstName,
+                @LastName,
+                @Email,
+                @Gender,
+                @Active
+            )";
 
         // Console.WriteLine(sql);
-        if (_dapper.ExecuteSql(sql))
+        if (_dapper.ExecuteSql(sql, user))
         {
             return Ok();
         }
@@ -123,13 +110,81 @@ public class UserController : ControllerBase
         string sql =
             @"
             DELETE FROM TutorialAppSchema.Users
-            WHERE UserId = " + userId.ToString();
+            WHERE UserId = @UserId";
 
         // Console.WriteLine(sql);
-        if (_dapper.ExecuteSql(sql))
+        if (_dapper.ExecuteSql(sql, new { UserId = userId }))
         {
             return Ok();
         }
         throw new Exception("Failed deleting user");
+    }
+
+    // Get User Salary
+    [HttpGet("GetUserSalary/{userId}")]
+    // public IActionResult Test()
+    public IEnumerable<UserSalary> GetUserSalary(int userId)
+    {
+        string sql =
+            @"
+        SELECT UserId, Salary 
+        FROM TutorialAppSchema.UserSalary 
+        WHERE UserId = @UserId";
+
+        return _dapper.LoadData<UserSalary>(sql, new { UserId = userId });
+    }
+
+    [HttpPost("UserSalary")]
+    public IActionResult PostUserSalary(UserSalary userSalaryForInsert)
+    {
+        string sql =
+            @"INSERT INTO TutorialAppSchema.UserSalary(
+                UserId,
+                Salary
+            ) VALUES (
+                @UserId,
+                @Salary
+            )";
+
+        Console.WriteLine(sql);
+        if (_dapper.ExecuteSql(sql, userSalaryForInsert))
+        {
+            return Ok(userSalaryForInsert);
+        }
+        throw new Exception("Failed Adding user Salary");
+    }
+
+    [HttpPut("UserSalary")]
+    public IActionResult UpdateUserSalary(UserSalary userSalaryForUpdate)
+    {
+        string sql =
+            @"
+            UPDATE TutorialAppSchema.UserSalary
+            SET Salary = @Salary
+            WHERE UserId = @UserId";
+
+        Console.WriteLine(sql);
+        if (_dapper.ExecuteSql(sql, userSalaryForUpdate))
+        {
+            return Ok(userSalaryForUpdate);
+        }
+
+        throw new Exception("Failed updating user salary");
+    }
+
+    [HttpDelete("UserSalary/{userId}")]
+    public IActionResult DeleteUserSalary(int userId)
+    {
+        string sql =
+            @"
+            DELETE FROM TutorialAppSchema.UserSalary
+            WHERE UserId = @UserId";
+
+        // Console.WriteLine(sql);
+        if (_dapper.ExecuteSql(sql, new { UserId = userId }))
+        {
+            return Ok();
+        }
+        throw new Exception("Failed deleting user salary");
     }
 }
