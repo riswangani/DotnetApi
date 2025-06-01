@@ -11,12 +11,12 @@ namespace DotnetAPI.Controllers;
 [Route("[controller]")]
 public class UserEFController : ControllerBase
 {
-    DataContextEF _entityFramework;
+    IUserRepository _userRepository;
     IMapper _mapper;
 
-    public UserEFController(IConfiguration config)
+    public UserEFController(IConfiguration config, IUserRepository userRepository)
     {
-        _entityFramework = new DataContextEF(config);
+        _userRepository = userRepository;
 
         _mapper = new Mapper(
             new MapperConfiguration(cfg =>
@@ -31,7 +31,7 @@ public class UserEFController : ControllerBase
     // public IActionResult Test()
     public IEnumerable<User> GetUsers()
     {
-        IEnumerable<User> users = _entityFramework.Users.ToList<User>();
+        IEnumerable<User> users = _userRepository.GetUsers();
         return users;
         // return new string[] { "Test", "Test 2" };
     }
@@ -40,23 +40,13 @@ public class UserEFController : ControllerBase
     // public IActionResult Test()
     public User GetSingleUser(int userId)
     {
-        User? user = _entityFramework.Users.Where(u => u.UserId == userId).FirstOrDefault<User>();
-
-        if (user != null)
-        {
-            return user;
-        }
-        throw new Exception("Failed to get user");
-
-        // return new string[] { "Test", "Test 2", userId };
+        return _userRepository.GetSingleUser(userId);
     }
 
     [HttpPut("EditUser")]
     public IActionResult EditUser(User user)
     {
-        User? userDb = _entityFramework
-            .Users.Where(u => u.UserId == user.UserId)
-            .FirstOrDefault<User>();
+        User? userDb = _userRepository.GetSingleUser(user.UserId);
 
         if (userDb != null)
         {
@@ -66,7 +56,7 @@ public class UserEFController : ControllerBase
             userDb.Email = user.Email;
             userDb.Gender = user.Gender;
 
-            if (_entityFramework.SaveChanges() > 0)
+            if (_userRepository.SaveChanges())
             {
                 return Ok();
             }
@@ -79,8 +69,8 @@ public class UserEFController : ControllerBase
     {
         User userDb = _mapper.Map<User>(user);
 
-        _entityFramework.Add(userDb);
-        if (_entityFramework.SaveChanges() > 0)
+        _userRepository.AddEntity<User>(userDb);
+        if (_userRepository.SaveChanges())
         {
             return Ok();
         }
@@ -91,12 +81,12 @@ public class UserEFController : ControllerBase
     [HttpDelete("DeleteUser/{userId}")]
     public IActionResult DeleteUser(int userId)
     {
-        User? userDb = _entityFramework.Users.Where(u => u.UserId == userId).FirstOrDefault<User>();
+        User? userDb = _userRepository.GetSingleUser(userId);
 
         if (userDb != null)
         {
-            _entityFramework.Users.Remove(userDb);
-            if (_entityFramework.SaveChanges() > 0)
+            _userRepository.RemoveEntity<User>(userDb);
+            if (_userRepository.SaveChanges())
             {
                 return Ok();
             }
@@ -110,27 +100,21 @@ public class UserEFController : ControllerBase
     // public IActionResult Test()
     public IEnumerable<UserSalary> GetUserSalaries()
     {
-        IEnumerable<UserSalary> users = _entityFramework.UserSalary.ToList();
-        return users;
+        return _userRepository.GetUserSalaries();
     }
 
     [HttpGet("UserSalary/{userId}")]
     // public IActionResult Test()
-    public ActionResult<UserSalary> GetUserSalary(int userId)
+    public UserSalary GetUserSalary(int userId)
     {
-        var userSalary = _entityFramework.UserSalary.FirstOrDefault(us => us.UserId == userId);
-
-        if (userSalary != null)
-            return Ok(userSalary);
-
-        return NotFound($"UserSalary with userId {userId} not found");
+        return _userRepository.GetSingleUserSalary(userId);
     }
 
     [HttpPost("AddUserSalary")]
     public IActionResult AddUserSalary(UserSalary userSalary)
     {
-        _entityFramework.UserSalary.Add(userSalary);
-        if (_entityFramework.SaveChanges() > 0)
+        _userRepository.AddEntity<UserSalary>(userSalary);
+        if (_userRepository.SaveChanges())
         {
             return Ok();
         }
@@ -138,38 +122,30 @@ public class UserEFController : ControllerBase
     }
 
     [HttpPut("UpdateUserSalary")]
-    public IActionResult UpdateUserSalary(UserSalary userSalary)
+    public IActionResult UpdateUserSalary(UserSalary userForUpdate)
     {
-        if (!ModelState.IsValid)
-            return BadRequest("Invalid Model");
+        UserSalary? userToUpdate = _userRepository.GetSingleUserSalary(userForUpdate.UserId);
 
-        var userSalaryDb = _entityFramework.UserSalary.FirstOrDefault(u =>
-            u.UserId == userSalary.UserId
-        );
-
-        if (userSalaryDb == null)
-            return NotFound($"UserSalary with userId {userSalary.UserId} not found");
-
-        // userSalaryDb.Salary = userSalary.Salary;
-        _mapper.Map(userSalary, userSalaryDb);
-
-        if (_entityFramework.SaveChanges() > 0)
-            return Ok("User salary updated successfully");
-
+        if (userToUpdate != null)
+        {
+            _mapper.Map(userToUpdate, userForUpdate);
+            if (_userRepository.SaveChanges())
+            {
+                return Ok("User salary updated successfully");
+            }
+        }
         return NoContent();
     }
 
     [HttpDelete("DeleteUserSalary/{userId}")]
     public IActionResult DeleteUserSalary(int userId)
     {
-        UserSalary? userSalaryDb = _entityFramework
-            .UserSalary.Where(u => u.UserId == userId)
-            .FirstOrDefault<UserSalary>();
+        UserSalary? userSalaryToDelete = _userRepository.GetSingleUserSalary(userId);
 
-        if (userSalaryDb != null)
+        if (userSalaryToDelete != null)
         {
-            _entityFramework.UserSalary.Remove(userSalaryDb);
-            if (_entityFramework.SaveChanges() > 0)
+            _userRepository.RemoveEntity<UserSalary>(userSalaryToDelete);
+            if (_userRepository.SaveChanges())
             {
                 return Ok();
             }

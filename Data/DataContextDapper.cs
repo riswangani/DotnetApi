@@ -1,5 +1,4 @@
 using System.Data;
-using System.Reflection.Metadata.Ecma335;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -46,6 +45,28 @@ namespace DotnetAPI.Data
                 _config.GetConnectionString("DefaultConnection")
             );
             return dbConnection.Execute(sql, parameters);
+        }
+
+        public bool ExecuteSqlWithParameter(string sql, List<SqlParameter> parameters)
+        {
+            SqlCommand commandWithParams = new SqlCommand(sql);
+            foreach (SqlParameter parameter in parameters)
+            {
+                commandWithParams.Parameters.Add(parameter);
+            }
+
+            SqlConnection dbConnection = new SqlConnection(
+                _config.GetConnectionString("DefaultConnection")
+            );
+            dbConnection.Open();
+
+            commandWithParams.Connection = dbConnection;
+
+            int rowsAffected = commandWithParams.ExecuteNonQuery();
+
+            dbConnection.Close();
+
+            return rowsAffected > 0;
         }
     }
 }
